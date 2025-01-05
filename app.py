@@ -15,7 +15,7 @@ def extract_sku_from_query(query: str) -> str:
 
     chat = ChatOpenAI(
         temperature=0, 
-        model_name="gpt-3.5-turbo"
+        model_name="gpt-4o"
     )
 
     # Prepare system instructions and user input
@@ -109,7 +109,7 @@ def main():
 
         # 4. Use a ChatOpenAI (GPT-4 or GPT-3.5, whichever is available) to summarize
         # Note: Make sure you have access to the GPT-4 model if using "gpt-4"
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
 
         prompt = (
             f"You are a data assistant that specializes in analyzing retail events. "
