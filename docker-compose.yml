@@ -1,16 +1,45 @@
-version: '3.8'
+version: "3.8"
 
 services:
   streamlit_app:
-    build: .
+    build: .  # Path to your Streamlit Dockerfile
     container_name: streamlit_rag_app
     ports:
       - "8501:8501"
+    environment:
+      - PRODUCT_EVENTS_API_URL=http://product_events_api:8000
+      - DC_EVENTS_API_URL=http://dc_events_api:8001
     networks:
       - shared_rag_network
+    env_file:
+      - .env
+
+  product_events_api:
+    build: /Users/paramasivandorai/product_search_api/product_events_api  # Path to your Product Event API Dockerfile
+    container_name: product_event_api
+    ports:
+      - "8000:8000"
     environment:
-      - OPENAI_API_KEY=your_openai_api_key  # Replace with your actual key if using OpenAI
-      - PRODUCT_EVENTS_API_URL=http://product_events_api:8000  # Replace with the actual URL if different
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: P0stGr3sM6ntr6
+      DB_HOST: host.docker.internal
+    networks:
+      - shared_rag_network
+
+  dc_events_api:
+    build: /Users/paramasivandorai/Desktop/Personal Projects/dc_events_api/dc_events_api  # Path to your DC Event API Dockerfile
+    container_name: dc_events_api
+    ports:
+      - "8001:8000"   # Maps container's 8000 to host's 8001
+    environment:
+      DB_NAME: WMS
+      DB_USER: postgres
+      DB_PASSWORD: P0stGr3sM6ntr6
+      DB_HOST: host.docker.internal
+    networks:
+      - shared_rag_network
+
 networks:
   shared_rag_network:
     external: true

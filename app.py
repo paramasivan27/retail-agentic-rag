@@ -43,7 +43,7 @@ def fetch_product_events(sku):
     """
     Fetches product events for the given SKU from the Inventory (Warehouse) system.
     """
-    url = f"http://localhost:8000/events?product_id={sku}&loc_type=W"  # Adjust the URL if needed
+    url = f"http://product_events_api:8000/events?product_id={sku}&loc_type=W"  # Adjust the URL if needed
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
@@ -56,7 +56,7 @@ def fetch_dc_events(sku):
     """
     Fetches product events for the given SKU from the DC system.
     """
-    url = f"http://localhost:8001/events?product_id={sku}"  # Adjust the URL if needed
+    url = f"http://dc_events_api:8001/events?product_id={sku}"  # Adjust the URL if needed
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
