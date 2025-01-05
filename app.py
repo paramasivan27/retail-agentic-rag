@@ -114,7 +114,8 @@ def main():
         prompt = (
             f"You are a data assistant that specializes in analyzing retail events. "
             f"Given the following two sets of data about product events in DC and Inventory system, "
-            f"compare and find out issues or missing events. Provide a concise summary.\n"
+            f"compare and find out issues or missing events. Events can be compared using the event_id field. "
+            f"Provide a concise summary.\n"
             f"Inventory Data: {json_inv_data}\n"
             f"DC Data: {json_dc_data}"
         )
