@@ -31,7 +31,7 @@ services:
     build: /Users/paramasivandorai/Desktop/Personal Projects/dc_events_api/dc_events_api  # Path to your DC Event API Dockerfile
     container_name: dc_events_api
     ports:
-      - "8001:8000"   # Maps container's 8000 to host's 8001
+      - "8001:8001"   # Maps container's 8000 to host's 8001
     environment:
       DB_NAME: WMS
       DB_USER: postgres
