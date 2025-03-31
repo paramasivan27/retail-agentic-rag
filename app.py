@@ -2,15 +2,16 @@ import streamlit as st
 import requests
 import re
 import json
+import os
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 
 llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
 
-PRODUCT_EVENTS_API_URL = "http://product_events_api:8000"
-DC_EVENTS_API_URL = "http://dc_events_api:8001"
-SOH_API_URL = "http://set_stock_on_hand:8002"  # assuming this is the set-stock-on-hand API
+PRODUCT_EVENTS_API_URL = os.getenv("PRODUCT_EVENTS_API_URL", "http://product_events_api:8000")
+DC_EVENTS_API_URL = os.getenv("DC_EVENTS_API_URL", "http://dc_events_api:8001")
+SOH_API_URL = os.getenv("SOH_API_URL", "http://set_stock_on_hand:8002")
 
 def classify_user_intent(user_query: str) -> dict:
     system_prompt = (
@@ -18,11 +19,14 @@ def classify_user_intent(user_query: str) -> dict:
         "Classify the user's message as one of the following intents:\n"
         "- get_stock\n"
         "- set_stock\n"
-        "- compare_events\n\n"
+        "- compare_events\n"
+        "- analyze_event\n\n"
         "If it's 'get_stock' or 'set_stock', extract the SKU and Location ID (and SOH value for set_stock).\n"
+        "If it's 'analyze_event', extract product_id and location_type.\n"
         "Reply in JSON like this:\n"
         "{ \"intent\": \"get_stock\", \"sku\": \"30000157\", \"location\": \"3\" }\n"
-        "{ \"intent\": \"set_stock\", \"sku\": \"30000157\", \"location\": \"3\", \"soh\": \"100\" }"
+        "{ \"intent\": \"set_stock\", \"sku\": \"30000157\", \"location\": \"3\", \"soh\": \"100\" }\n"
+        "{ \"intent\": \"analyze_event\", \"sku\": \"30000157\", \"loc_type\": \"W\" }"
     )
 
     response = llm([
@@ -38,22 +42,23 @@ def classify_user_intent(user_query: str) -> dict:
 def get_stock(sku, location):
     try:
         response = requests.get(f"{SOH_API_URL}/get_stock?product_id={sku}&location_id={location}")
-        return response.json() if response.status_code == 200 else None
+        return response.json() if response.status_code == 200 else {"error": response.text}
     except Exception as e:
-        st.error(f"Error fetching stock: {str(e)}")
-        return None
+        return {"error": str(e)}
 
 def set_stock(sku, soh, location):
     try:
         payload = {"product_id": int(sku), "soh": int(soh), "location": int(location)}
         response = requests.post(f"{SOH_API_URL}/adjust_stock", json=payload)
-        return response.json() if response.status_code == 200 else None
+        return response.json() if response.status_code == 200 else {"error": response.text}
     except Exception as e:
-        st.error(f"Error setting stock: {str(e)}")
-        return None
+        return {"error": str(e)}
 
-def fetch_product_events(sku):
-    response = requests.get(f"{PRODUCT_EVENTS_API_URL}/events?product_id={sku}&loc_type=W")
+def fetch_product_events(sku, loc_type=None):
+    url = f"{PRODUCT_EVENTS_API_URL}/events?product_id={sku}"
+    if loc_type:
+        url += f"&loc_type={loc_type}"
+    response = requests.get(url)
     return response.json() if response.status_code == 200 else None
 
 def fetch_dc_events(sku):
@@ -73,12 +78,18 @@ def main():
         if intent == "get_stock":
             stock_data = get_stock(result['sku'], result['location'])
             st.subheader("Stock on Hand")
-            st.json(stock_data)
+            if isinstance(stock_data, dict):
+                st.json(stock_data)
+            else:
+                st.error("Invalid response format. Expected JSON object.")
 
         elif intent == "set_stock":
             update_result = set_stock(result['sku'], result['soh'], result['location'])
             st.subheader("Stock Update Result")
-            st.json(update_result)
+            if isinstance(update_result, dict):
+                st.json(update_result)
+            else:
+                st.error("Invalid response format. Expected JSON object.")
 
         elif intent == "compare_events":
             sku = result.get("sku") or extract_sku_from_query(user_input)
@@ -105,6 +116,26 @@ def main():
 
             summary = llm([HumanMessage(content=prompt)]).content.strip()
             st.subheader("Summary")
+            st.write(summary)
+
+        elif intent == "analyze_event":
+            sku = result.get("sku")
+            loc_type = result.get("loc_type")
+            events = fetch_product_events(sku, loc_type)
+
+            if not events:
+                st.warning("No events found for the given product and location type.")
+                return
+
+            json_events = json.dumps(events)
+            prompt = (
+                f"You are an assistant that analyzes inventory events for a specific location type. "
+                f"Summarize the key activity, patterns, or anomalies from the following event data:\n"
+                f"{json_events}"
+            )
+
+            summary = llm([HumanMessage(content=prompt)]).content.strip()
+            st.subheader("Event Analysis")
             st.write(summary)
 
         else:

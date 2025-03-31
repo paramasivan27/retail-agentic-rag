@@ -9,6 +9,8 @@ services:
     environment:
       - PRODUCT_EVENTS_API_URL=http://product_events_api:8000
       - DC_EVENTS_API_URL=http://dc_events_api:8001
+      - SOH_API_URL=http://set_stock_on_hand:8002
+
     networks:
       - shared_rag_network
     env_file:
@@ -40,17 +42,13 @@ services:
     networks:
       - shared_rag_network
 
-networks:
-  shared_rag_network:
-    external: true
-
-  dc_events_api:
+  set_stock_on_hand:
     build: /Users/paramasivandorai/Desktop/Personal Projects/setStockOnHand/set-stock-on-hand  # Path to your Stock on hand API Dockerfile
     container_name: set_stock_on_hand
     ports:
       - "8002:8002"   # Maps container's 8000 to host's 8001
     environment:
-      DB_NAME: WMS
+      DB_NAME: postgres
       DB_USER: postgres
       DB_PASSWORD: P0stGr3sM6ntr6
       DB_HOST: host.docker.internal
