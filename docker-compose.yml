@@ -46,7 +46,7 @@ networks:
 
   dc_events_api:
     build: /Users/paramasivandorai/Desktop/Personal Projects/setStockOnHand/set-stock-on-hand  # Path to your Stock on hand API Dockerfile
-    container_name: dc_events_api
+    container_name: set_stock_on_hand
     ports:
       - "8002:8002"   # Maps container's 8000 to host's 8001
     environment:
