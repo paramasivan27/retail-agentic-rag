@@ -43,3 +43,20 @@ services:
 networks:
   shared_rag_network:
     external: true
+
+  dc_events_api:
+    build: /Users/paramasivandorai/Desktop/Personal Projects/setStockOnHand/set-stock-on-hand  # Path to your Stock on hand API Dockerfile
+    container_name: dc_events_api
+    ports:
+      - "8002:8002"   # Maps container's 8000 to host's 8001
+    environment:
+      DB_NAME: WMS
+      DB_USER: postgres
+      DB_PASSWORD: P0stGr3sM6ntr6
+      DB_HOST: host.docker.internal
+    networks:
+      - shared_rag_network
+
+networks:
+  shared_rag_network:
+    external: true
