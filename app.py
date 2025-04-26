@@ -15,12 +15,13 @@ SOH_API_URL = os.getenv("SOH_API_URL", "http://set_stock_on_hand:8002")
 
 def classify_user_intent(user_query: str) -> dict:
     system_prompt = (
-        "You are an assistant that detects user intent related to retail inventory.\n"
+        "You are an retail assistant that detects user intent related to retail inventory.\n"
         "Classify the user's message as one of the following intents:\n"
         "- get_stock\n"
         "- set_stock\n"
         "- compare_events\n"
         "- analyze_event\n\n"
+        "Note: The user may not say explicitly analyze. Understand if the user is trying to find the reason for an inventory position. \n"
         "If it's 'get_stock' or 'set_stock', extract the SKU and Location ID (and SOH value for set_stock).\n"
         "If it's 'analyze_event', extract product_id and location_type.\n"
         "Reply in JSON like this:\n"
@@ -129,7 +130,8 @@ def main():
 
             json_events = json.dumps(events)
             prompt = (
-                f"You are an assistant that analyzes inventory events for a specific location type. "
+                f"You are a retail assistant that analyzes retail inventory events for a specific location type. "
+                f"There are two types of locations S for store and W for wharehouse. \n"
                 f"Summarize the key activity, patterns, or anomalies from the following event data:\n"
                 f"{json_events}"
             )
