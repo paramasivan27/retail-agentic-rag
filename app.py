@@ -13,22 +13,34 @@ PRODUCT_EVENTS_API_URL = os.getenv("PRODUCT_EVENTS_API_URL", "http://product_eve
 DC_EVENTS_API_URL = os.getenv("DC_EVENTS_API_URL", "http://dc_events_api:8001")
 SOH_API_URL = os.getenv("SOH_API_URL", "http://set_stock_on_hand:8002")
 
-def classify_user_intent(user_query: str) -> dict:
-    system_prompt = (
-        "You are an retail assistant that detects user intent related to retail inventory.\n"
-        "Classify the user's message as one of the following intents:\n"
-        "- get_stock\n"
-        "- set_stock\n"
-        "- compare_events\n"
-        "- analyze_event\n\n"
-        "Note: The user may not say explicitly analyze. Understand if the user is trying to find the reason for an inventory position. \n"
-        "If it's 'get_stock' or 'set_stock', extract the SKU and Location ID (and SOH value for set_stock).\n"
-        "If it's 'analyze_event', extract product_id and location_type.\n"
-        "Reply in JSON like this:\n"
-        "{ \"intent\": \"get_stock\", \"sku\": \"30000157\", \"location\": \"3\" }\n"
-        "{ \"intent\": \"set_stock\", \"sku\": \"30000157\", \"location\": \"3\", \"soh\": \"100\" }\n"
-        "{ \"intent\": \"analyze_event\", \"sku\": \"30000157\", \"loc_type\": \"W\" }"
-    )
+def classify_user_intent(user_query: str):
+    system_prompt = """You are an expert intent classifier and information extractor.
+    Your task is:
+    1. Identify the intent from the given user query.
+    2. Extract the following information if present:
+       - Store Number: A four-digit number (e.g., 1001).
+       - DC Number: A one- or two-digit number (e.g., 5, 12).
+       - SKU Number: A nine-digit number (e.g., 123456789).
+       - Location Type:
+       - If referring to a store, set Location Type = "S".
+       - If referring to a warehouse or DC, set Location Type = "W".
+    Possible intents are:
+    - get_stock
+    - set_stock
+    - compare_events
+    - analyze_event for one location
+    - analyze_event for one location type
+    - analyze_event for one item
+    Respond ONLY in the following JSON format:
+    ```json
+    {
+    "intent": "<one_of_the_above_intents>",
+    "store_number": "<four_digit_store_number_or_null>",
+    "dc_number": "<one_or_two_digit_dc_number_or_null>",
+    "sku_number": "<nine_digit_sku_number_or_null>",
+    "location_type": "<S_or_W_or_null>",
+    "reasoning": "<brief_explanation_for_your_choice>"
+    }"""
 
     response = llm([
         SystemMessage(content=system_prompt),
